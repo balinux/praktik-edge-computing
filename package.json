@@ -1,0 +1,16 @@
+{
+  "name": "praktik-edge-computing",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "axios": "^1.15.0",
+    "mqtt": "^5.15.1"
+  }
+}
