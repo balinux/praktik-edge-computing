@@ -1,12 +1,12 @@
-#include <WiFi.h>
-#include <PubSubClient.h>
 #include <DHT.h>
+#include <PubSubClient.h>
+#include <WiFi.h>
 
-#define DHTPIN 5       // D1 (AMAN)
+#define DHTPIN 5 // D1 (AMAN)
 #define DHTTYPE DHT22
 
-#define FAN 4          // D2
-#define LAMP 2         // D4 (LED built-in)
+#define FAN 4  // D2
+#define LAMP 2 // D4 (LED built-in)
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -15,35 +15,33 @@ DHT dht(DHTPIN, DHTTYPE);
 
 // const char* mqtt_server = "192.168.1.192";
 
-const char* ssid = "TP";
-const char* password = "123@khalid";
+const char *ssid = "TP";
+const char *password = "123@khalid";
 
-const char* mqtt_server = "192.168.1.7";
+const char *mqtt_server = "192.168.1.7";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 // ================= CALLBACK MQTT =================
-void callback(char* topic, byte* message, unsigned int length) {
+void callback(char *topic, byte *message, unsigned int length) {
 
   Serial.println("\n📩 MQTT Message Masuk");
-  Serial.print("Raw topic: '"); Serial.print(topic); Serial.print("' len="); Serial.println(strlen(topic));
-  Serial.print("Raw payload (hex): ");
-  for (unsigned int i=0;i<length;i++){ Serial.print(message[i], HEX); Serial.print(" "); }
-  Serial.println();
 
-  // build null-terminated payload buffer
-  char payload[128];
-  if (length >= sizeof(payload)) length = sizeof(payload)-1;
-  for (unsigned int i=0;i<length;i++) payload[i] = (char)message[i];
-  payload[length] = '\0';
+  String msg;
+  for (int i = 0; i < length; i++) {
+    msg += (char)message[i];
+  }
 
-  Serial.print("📌 Topic: "); Serial.println(topic);
-  Serial.print("📌 Message: "); Serial.println(payload);
+  Serial.print("📌 Topic: ");
+  Serial.println(topic);
+
+  Serial.print("📌 Message: ");
+  Serial.println(msg);
 
   // === KONTROL FAN ===
-  if (strcmp(topic, "kampus/kipas") == 0) {
-    if (strcmp(payload, "ON") == 0) {
+  if (String(topic) == "kampus/kipas") {
+    if (msg == "ON") {
       digitalWrite(FAN, HIGH);
       Serial.println("🌀 FAN: ON");
     } else {
@@ -53,8 +51,8 @@ void callback(char* topic, byte* message, unsigned int length) {
   }
 
   // === KONTROL LAMP ===
-  if (strcmp(topic, "kampus/lampu") == 0) {
-    if (strcmp(payload, "ON") == 0) {
+  if (String(topic) == "kampus/lampu") {
+    if (msg == "ON") {
       digitalWrite(LAMP, HIGH);
       Serial.println("💡 LAMP: ON");
     } else {
@@ -74,10 +72,12 @@ void reconnect() {
     if (client.connect("ESP32")) {
       Serial.println("✅ Connected!");
 
-      client.subscribe("kampus/#");
+      client.subscribe("kampus/kipas");
+      client.subscribe("kampus/lampu");
 
       Serial.println("📡 Subscribe ke topik:");
-      Serial.println(" - kampus/#");
+      Serial.println(" - kampus/kipas");
+      Serial.println(" - kampus/lampu");
 
     } else {
       Serial.print("❌ Gagal, rc=");
@@ -126,7 +126,8 @@ void setup() {
 // ================= LOOP =================
 void loop() {
 
-  if (!client.connected()) reconnect();
+  if (!client.connected())
+    reconnect();
 
   client.loop();
 
@@ -136,8 +137,8 @@ void loop() {
   if (isnan(suhu) || isnan(hum)) {
     Serial.println("⚠️ Gagal membaca sensor DHT!");
     // return;
-    suhu = random(200,350) / 10.0; // 20.0 – 34.9
-    hum  = random(600,900) / 10.0; // 60% - 90%
+    suhu = random(200, 350) / 10.0; // 20.0 – 34.9
+    hum = random(600, 900) / 10.0;  // 60% - 90%
   }
 
   Serial.print("🌡️ Suhu: ");
